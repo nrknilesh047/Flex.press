@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphic Design | FlexPress.com</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="background-glow"></div>
+
+    <header>
+        <nav>
+            <div class="logo"><a href="index.html" style="text-decoration: none; color: inherit;">FlexPress<span
+                        class="highlight">.com</span></a></div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="index.html" class="nav-link"
+                    style="color: var(--text-main); text-decoration: none; font-weight: 500;">Home</a>
+                <button onclick="openLocationModal()" class="location-btn" aria-label="View Location">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </button>
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <a href="index.html#order" class="cta-btn">Order Flex</a>
+            </div>
+        </nav>
+        <div class="hero">
+            <h1>Creative <span class="gradient-text">Graphic Design</span></h1>
+            <p>Professional design services for your brand identity.</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="pricing-section">
+            <h2 style="text-align: center; margin-bottom: 3rem;">Design Packages</h2>
+            <div class="cards-container" style="justify-content: center;">
+                <div class="card featured">
+                    <div class="badge">Best Value</div>
+                    <div class="card-icon"><i class="fa-solid fa-pen-nib"></i></div>
+                    <h3>Professional Design</h3>
+                    <p class="price" style="font-size: 2rem;">₹1000 - ₹3000</p>
+                    <ul class="features">
+                        <li><i class="fa-solid fa-check"></i> Logo Design</li>
+                        <li><i class="fa-solid fa-check"></i> Visiting Cards</li>
+                        <li><i class="fa-solid fa-check"></i> Pamphlets & Banners</li>
+                        <li><i class="fa-solid fa-check"></i> Social Media Posts</li>
+                        <li><i class="fa-solid fa-check"></i> High Resolution Source Files</li>
+                    </ul>
+                    <a href="tel:8957183459" class="submit-btn"
+                        style="text-decoration: none; display: inline-block; text-align: center;">Call to Order</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 FlexPress Services.</p>
+    </footer>
+
+    <!-- Reuse Location Modal -->
+    <div id="locationModal" class="modal">
+        <div class="modal-content">
+            <h2>Visit Our Store</h2>
+            <div class="shop-details">
+                <h4>Ram Flex Printing</h4>
+                <p><i class="fa-solid fa-star"></i> Best Flex & All Type Printings at Cheapest Price</p>
+                <p><i class="fa-solid fa-user-tie"></i> Main Owner: Ram Raikwar</p>
+                <p><i class="fa-solid fa-user"></i> Manager: Nilesh Raikwar</p>
+                <p><i class="fa-solid fa-user"></i> Mobile no: 8957183459</p>
+                <p><i class="fa-solid fa-location-dot"></i> MP Nagar Zone 1, Bhopal, MP, India - 462023</p>
+            </div>
+            <div class="map-container">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d34581.937788335184!2d77.41261296298562!3d23.22088740813303!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397c4269deb07df9%3A0xfee61a854a2e5374!2sMaharana%20Pratap%20Nagar%2C%20Bhopal%2C%20Madhya%20Pradesh!5e0!3m2!1sen!2sin!4v1766232444294!5m2!1sen!2sin"
+                    width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+            <button onclick="closeLocationModal()" class="close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <!-- Need minimal script for theme toggle and modal -->
+    <script>
+        // Copying minimal logic for design page
+        const RATES = {}; // Not needed
+        const widthInput = null; // Not needed
+
+        function init() {
+            // Check Helpline (reuse logic if in separate file, or copy-paste)
+            // Just basic theme logic here
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    let newTheme = 'gold';
+
+                    if (currentTheme === 'gold') {
+                        newTheme = 'dark';
+                    } else if (currentTheme === 'dark') {
+                        newTheme = 'light';
+                    } else if (currentTheme === 'light') {
+                        newTheme = 'cartoon';
+                    } else {
+                        newTheme = 'gold';
+                    }
+
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    updateThemeIcon(newTheme);
+                });
+            }
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.querySelector('#themeToggle i');
+            if (icon) {
+                icon.className = 'fa-solid';
+                if (theme === 'gold') icon.classList.add('fa-gem');
+                else if (theme === 'light') icon.classList.add('fa-sun');
+                else if (theme === 'cartoon') icon.classList.add('fa-face-smile');
+                else icon.classList.add('fa-moon');
+            }
+        }
+
+        window.openLocationModal = function () {
+            const modal = document.getElementById('locationModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        window.closeLocationModal = function () {
+            const modal = document.getElementById('locationModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

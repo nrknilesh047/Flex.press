@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | FlexPress.com</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .orders-table-wrapper {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            overflow-x: auto;
+            box-shadow: var(--shadow-strong);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-main);
+            min-width: 800px;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #ffd70033;
+            color: #ffd700;
+        }
+
+        .status-completed {
+            background: #00ff8833;
+            color: #00ff88;
+        }
+
+        .status-deleted {
+            background: #ff444433;
+            color: #ff4444;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: #ff4444;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .stat-card h4 {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        #loginOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: var(--glass-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>Admin Login</h2>
+            <div class="input-group" style="margin: 1.5rem 0;">
+                <input type="password" id="adminPass" placeholder="Enter Access Pin" class="utr-input">
+            </div>
+            <button onclick="checkAccess()" class="submit-btn" style="width: 100%;">Access Dashboard</button>
+        </div>
+    </div>
+
+    <div class="background-glow"></div>
+
+    <header>
+        <nav>
+            <div class="logo">Admin<span class="highlight">Dashboard</span></div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="index.html" class="nav-link">Main Site</a>
+                <button onclick="logout()" class="text-btn">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <div class="dashboard-header">
+            <div>
+                <h1>Order Management</h1>
+                <p id="dbStatus">Source: Local Storage</p>
+            </div>
+            <button onclick="refreshData()" class="cta-btn"><i class="fa-solid fa-sync"></i> Refresh Data</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Total Orders</h4>
+                <p id="totalOrders">0</p>
+            </div>
+            <div class="stat-card">
+                <h4>Revenue</h4>
+                <p id="totalRevenue">₹0</p>
+            </div>
+            <div class="stat-card">
+                <h4>Pending</h4>
+                <p id="pendingOrders">0</p>
+            </div>
+        </div>
+
+        <div class="orders-table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Type</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersBody">
+                    <!-- Orders will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="script.js"></script> <!-- To get firebaseConfig -->
+    <script>
+        // Access Control
+        function checkAccess() {
+            const pin = document.getElementById('adminPass').value;
+            // Simplified security for demonstration
+            if (pin === "8957") {
+                document.getElementById('loginOverlay').style.display = 'none';
+                localStorage.setItem('admin_access', 'true');
+                refreshData();
+            } else {
+                alert("Incorrect PIN");
+            }
+        }
+
+        if (localStorage.getItem('admin_access') === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_access');
+            location.reload();
+        }
+
+        async function refreshData() {
+            let orders = [];
+            const dbStatusEl = document.getElementById('dbStatus');
+
+            if (typeof db !== 'undefined' && db !== null) {
+                dbStatusEl.textContent = "Source: Firebase Firestore";
+                try {
+                    const snapshot = await db.collection("orders").orderBy("timestamp", "desc").get();
+                    snapshot.forEach(doc => {
+                        orders.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch (e) {
+                    console.error("Firestore error:", e);
+                }
+            } else {
+                dbStatusEl.textContent = "Source: Local Storage (Strong Database not linked)";
+                orders = JSON.parse(localStorage.getItem('flex_orders') || '[]');
+                orders.reverse(); // Newest first
+            }
+
+            renderOrders(orders);
+            updateStats(orders);
+        }
+
+        function renderOrders(orders) {
+            const body = document.getElementById('ordersBody');
+            body.innerHTML = '';
+
+            orders.forEach(order => {
+                const date = new Date(order.timestamp).toLocaleDateString();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${date}</td>
+                    <td>${order.orderId}</td>
+                    <td>${order.customerName}</td>
+                    <td>${order.phone}</td>
+                    <td>${order.type}</td>
+                    <td>₹${order.totalCost}</td>
+                    <td><span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span></td>
+                    <td class="action-btns">
+                        <button onclick="updateStatus('${order.id || order.orderId}', 'Completed')" class="action-btn"><i class="fa-solid fa-check"></i></button>
+                        <button onclick="deleteOrder('${order.id || order.orderId}')" class="action-btn delete"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function updateStats(orders) {
+            document.getElementById('totalOrders').textContent = orders.length;
+            const revenue = orders.reduce((sum, o) => sum + (o.totalCost || 0), 0);
+            document.getElementById('totalRevenue').textContent = `₹${revenue.toLocaleString()}`;
+            const pending = orders.filter(o => o.status === 'Pending').length;
+            document.getElementById('pendingOrders').textContent = pending;
+        }
+
+        async function updateStatus(id, status) {
+            if (typeof db !== 'undefined' && db !== null) {
+                await db.collection("orders").doc(id).update({ status: status });
+            } else {
+                let orders = JSON.parse(localStorage.getItem('flex_orders') || '[]');
+                orders = orders.map(o => o.orderId === id ? { ...o, status: status } : o);
+                localStorage.setItem('flex_orders', JSON.stringify(orders));
+            }
+            refreshData();
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm("Are you sure you want to delete this order?")) return;
+
+            if (typeof db !== 'undefined' && db !== null) {
+                await db.collection("orders").doc(id).delete();
+            } else {
+                let orders = JSON.parse(localStorage.getItem('flex_orders') || '[]');
+                orders = orders.filter(o => o.orderId !== id);
+                localStorage.setItem('flex_orders', JSON.stringify(orders));
+            }
+            refreshData();
+        }
+
+        // Initial Load
+        if (localStorage.getItem('admin_access') === 'true') {
+            refreshData();
+        }
+    </script>
+</body>
+
+</html>
