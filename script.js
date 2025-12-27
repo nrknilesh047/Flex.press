@@ -295,6 +295,9 @@ window.verifyPayment = function () {
     }, 2500);
 }
 
+// Email Configuration
+const OWNER_EMAIL = "nrknilesh047@gmail.com";
+
 window.finishOrder = async function (orderId = Math.floor(Math.random() * 1000000)) {
     const name = nameInput.value;
     const phone = document.getElementById('phone') ? document.getElementById('phone').value : 'N/A';
@@ -304,6 +307,7 @@ window.finishOrder = async function (orderId = Math.floor(Math.random() * 100000
     const utr = document.getElementById('utrNumber') ? document.getElementById('utrNumber').value : 'N/A';
     const totalRaw = totalPriceEl.textContent.replace(/[^\d.]/g, '');
     const total = parseFloat(totalRaw);
+    const designFile = designFileInput.files[0];
 
     const orderData = {
         orderId: `#${orderId}`,
@@ -320,7 +324,7 @@ window.finishOrder = async function (orderId = Math.floor(Math.random() * 100000
         timestamp: new Date().toISOString()
     };
 
-    // Save to Firestore if available
+    // 1. Save to Database (Local/Firebase)
     if (db) {
         try {
             await db.collection("orders").add(orderData);
@@ -329,15 +333,15 @@ window.finishOrder = async function (orderId = Math.floor(Math.random() * 100000
             console.error("Error saving order:", error);
         }
     } else {
-        // Fallback: Save to localStorage for robust "local" database
         const localOrders = JSON.parse(localStorage.getItem('flex_orders') || '[]');
         localOrders.push(orderData);
         localStorage.setItem('flex_orders', JSON.stringify(localOrders));
-        console.log("Saved to local database (Firebase not configured)");
+        console.log("Saved to local database");
     }
 
     closeModal();
 
+    // 2. Prepare Alert Message
     let message = `Order Placed Successfully!\n\nOrder ID: #${orderId}\nName: ${name}\nType: ${currentType.toUpperCase()}\nQuantity: ${qty}\nTotal Cost: ${totalPriceEl.textContent}\nAddress: ${address}`;
 
     if (currentPaymentMode === 'half') {
@@ -348,12 +352,56 @@ window.finishOrder = async function (orderId = Math.floor(Math.random() * 100000
 
     message += `\nUTR: ${utr}`;
 
+    // 3. Send Email in Background
+    sendOrderEmail(orderData, designFile);
+
     alert(message);
 
     // Reset Form
     orderForm.reset();
     selectType('standard');
     if (document.getElementById('utrNumber')) document.getElementById('utrNumber').value = '';
+    fileNameDisplay.textContent = '';
+}
+
+// Function to send email via FormSubmit.co
+async function sendOrderEmail(data, file) {
+    const formData = new FormData();
+
+    // Add hidden configuration for FormSubmit
+    formData.append("_captcha", "false");
+    formData.append("_template", "table");
+    formData.append("_subject", `New Order #${data.orderId} from ${data.customerName}`);
+
+    // Add Order Data
+    formData.append("Order ID", data.orderId);
+    formData.append("Customer Name", data.customerName);
+    formData.append("Phone Number", data.phone);
+    formData.append("Customer Email", data.email);
+    formData.append("Delivery Address", data.address);
+    formData.append("Flex Quality", data.type);
+    formData.append("Quantity", data.quantity);
+    formData.append("Total Cost", `₹${data.totalCost}`);
+    formData.append("Payment Mode", data.paymentMode === 'half' ? '50% Advance' : 'Full Payment');
+    formData.append("UTR/Transaction ID", data.utr);
+
+    // Add File if exists
+    if (file) {
+        formData.append("Design File", file);
+    }
+
+    try {
+        await fetch(`https://formsubmit.co/${OWNER_EMAIL}`, {
+            method: "POST",
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        console.log("Email sent successfully to owner.");
+    } catch (error) {
+        console.error("Failed to send email:", error);
+    }
 }
 
 // Location Modal
